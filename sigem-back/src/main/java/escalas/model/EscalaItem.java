@@ -41,6 +41,17 @@ public class EscalaItem {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt = LocalDateTime.now();
 
+    @Column(name = "is_feriado_manual")
+    private Boolean isFeriadoManual = false; // Por padrão, começa como falso (dia normal)
+
+    public Boolean getFeriadoManual() {
+        return isFeriadoManual;
+    }
+
+    public void setFeriadoManual(Boolean feriadoManual) {
+        isFeriadoManual = feriadoManual;
+    }
+
     @PreUpdate
     public void preUpdate() {
         updatedAt = LocalDateTime.now();
