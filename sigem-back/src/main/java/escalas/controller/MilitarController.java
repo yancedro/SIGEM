@@ -3,6 +3,7 @@ package escalas.controller;
 import escalas.model.Militar;
 import escalas.service.MilitarService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -34,8 +35,16 @@ public class MilitarController {
 
     // 4. CADASTRAR NOVO MILITAR
     @PostMapping
-    public Militar cadastrar(@RequestBody Militar militar) {
-        return service.cadastrar(militar);
+    public ResponseEntity<?> cadastrar(@RequestBody Militar militar) {
+        try {
+            Militar militarSalvo = service.cadastrar(militar);
+            return ResponseEntity.status(201).body(militarSalvo); // 201 = Created
+        } catch (IllegalArgumentException e) {
+            // Se o Service barrar, o Controller devolve o erro 400 (Bad Request) com a mensagem
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Erro interno ao processar o cadastro.");
+        }
     }
 
     // 5. ATUALIZAR DADOS

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { UserPlus, CalendarPlus, CalendarRange, BarChart3, ShieldAlert, Flag, Zap, PlusCircle } from 'lucide-react';
+import { UserPlus, CalendarPlus, CalendarRange, BarChart3, ShieldAlert, Flag, Zap, PlusCircle, CheckCircle, AlertCircle } from 'lucide-react';
 import api from '../services/api';
 
 const authConfig = { auth: { username: '123456789', password: '123' } };
@@ -12,8 +12,84 @@ export default function PainelAdmin() {
   const [escalaIdSelecionada, setEscalaIdSelecionada] = useState('');
   const [dadosEscala, setDadosEscala] = useState(null);
 
-  // Forms
-  const [formMilitar, setFormMilitar] = useState({ nomeCompleto: '', nomeGuerra: '', graduacao: 'Soldado', saram: '', telefone: '' });
+  // Form Militar cadastro
+  // 1. Estado do formulário para cadastro de usuario
+  
+  const [formMilitar, setFormMilitar] = useState({ 
+    nomeCompleto: '', 
+    nomeGuerra: '', 
+    graduacao: 'S2', 
+    saram: '', 
+    cpf: '',
+    email: '',
+    telefone: '',
+    dataNascimento: '',
+    senha: '',
+    perfil: 'usuario'
+  });
+  // MÁSCARA DE CPF: Transforma "12345678900" em "123.456.789-00"
+  const aplicarMascaraCPF = (valor) => {
+    return valor
+      .replace(/\D/g, '') // Remove tudo o que não for número
+      .replace(/(\d{3})(\d)/, '$1.$2') // Coloca o primeiro ponto
+      .replace(/(\d{3})(\d)/, '$1.$2') // Coloca o segundo ponto
+      .replace(/(\d{3})(\d{1,2})/, '$1-$2') // Coloca o traço
+      .replace(/(-\d{2})\d+?$/, '$1'); // Trava no limite máximo de 14 caracteres
+  };
+
+  // MÁSCARA DE SARAM: Permite apenas números e trava em 7 dígitos exatos
+  const aplicarMascaraSaram = (valor) => {
+    return valor
+      .replace(/\D/g, '') // Remove letras e símbolos
+      .slice(0, 7); // Trava no máximo de 7 caracteres
+  };
+
+  // NOVO ESTADO: Controle da mensagem na tela
+  const [mensagem, setMensagem] = useState({ texto: '', tipo: '' });
+
+  // FUNÇÃO INTELIGENTE: Mostra a mensagem e apaga ela sozinha após 5 segundos
+  const mostrarMensagem = (texto, tipo) => {
+    setMensagem({ texto, tipo });
+    setTimeout(() => {
+      setMensagem({ texto: '', tipo: '' });
+    }, 5000);
+  };
+
+  const handleCadastrarMilitar = async (e) => {
+    e.preventDefault();
+
+    // TRAVAS DE SEGURANÇA
+    if (formMilitar.saram.length !== 7) {
+      mostrarMensagem("Ação negada: O SARAM deve conter exatamente 7 dígitos numéricos.", "erro");
+      return;
+    }
+    if (formMilitar.cpf.length !== 14) {
+      mostrarMensagem("Ação negada: O CPF está incompleto ou inválido.", "erro");
+      return;
+    }
+
+    try {
+      await api.post('/militares', formMilitar, authConfig);
+      
+      mostrarMensagem(`Militar ${formMilitar.graduacao} ${formMilitar.nomeGuerra} cadastrado com sucesso!`, "sucesso");
+      
+      // Limpa os campos após salvar
+      setFormMilitar({ 
+        nomeCompleto: '', nomeGuerra: '', graduacao: 'S2', saram: '', 
+        cpf: '', email: '', telefone: '', dataNascimento: '', 
+        senha: '', perfil: 'usuario' 
+      });
+    } catch (err) {
+      console.error(err);
+      // Puxa a mensagem de erro que veio do Spring Boot (se existir), ou mostra a genérica
+      const mensagemDoServidor = typeof err.response?.data === 'string' 
+          ? err.response.data 
+          : "Erro interno no servidor Java. Verifique o console do IntelliJ.";
+          
+      mostrarMensagem(mensagemDoServidor, "erro");
+    }
+  };
+  
   const [formEscala, setFormEscala] = useState({ mes: '1', ano: '2026', tipo: 'PROVISÓRIA', servicoId: '1' });
 
   useEffect(() => {
@@ -47,7 +123,7 @@ export default function PainelAdmin() {
   };
 
   useEffect(() => { carregarItensEscala(); }, [escalaIdSelecionada]);
-
+  // Altera o dia para vermelho
   const handleAlternarFeriado = async (itemId) => {
     try {
       await api.patch(`/escalas/itens/${itemId}/alternar-feriado`, {}, authConfig);
@@ -133,10 +209,107 @@ export default function PainelAdmin() {
         )}
 
         {subAba === 'cadastro' && (
-          <div style={styles.formCard}>
-            <h3>Módulo em Desenvolvimento</h3>
-            <p>Os formulários de inclusão de militares serão conectados à API em breve.</p>
-          </div>
+          <form onSubmit={handleCadastrarMilitar} style={styles.formCard}>
+            <h3 style={{ color: '#004d40', marginBottom: '20px', borderBottom: '2px solid #e0f2f1', paddingBottom: '10px' }}>
+              Inclusão de Novo Militar no Efetivo
+            </h3>
+
+            {/* CAIXA DE MENSAGEM DINÂMICA */}
+            {mensagem.texto && (
+              <div style={mensagem.tipo === 'erro' ? styles.msgErro : styles.msgSucesso}>
+                {mensagem.tipo === 'erro' ? <AlertCircle size={20} /> : <CheckCircle size={20} />}
+                <span>{mensagem.texto}</span>
+              </div>
+            )}
+            
+            <div style={styles.formGrid}></div>
+            
+            <div style={styles.formGrid}>
+              <div style={styles.inputGroupCol}>
+                <label style={styles.inputLabel}>Nome Completo</label>
+                <input type="text" required value={formMilitar.nomeCompleto} onChange={e => setFormMilitar({...formMilitar, nomeCompleto: e.target.value})} style={styles.input} />
+              </div>
+
+              <div style={styles.inputGroupCol}>
+                <label style={styles.inputLabel}>Nome de Guerra</label>
+                <input type="text" required value={formMilitar.nomeGuerra} onChange={e => setFormMilitar({...formMilitar, nomeGuerra: e.target.value})} style={styles.input} />
+              </div>
+
+              <div style={styles.inputGroupCol}>
+                <label style={styles.inputLabel}>Posto / Graduação</label>
+                <select value={formMilitar.graduacao} onChange={e => setFormMilitar({...formMilitar, graduacao: e.target.value})} style={styles.input}>
+                  <option value="S2">S2 (Soldado de 2ª Classe)</option>
+                  <option value="S1">S1 (Soldado de 1ª Classe)</option>
+                  <option value="CB">CB (Cabo)</option>
+                  <option value="3S">3S (Terceiro Sargento)</option>
+                  <option value="2S">2S (Segundo Sargento)</option>
+                  <option value="1S">1S (Primeiro Sargento)</option>
+                  <option value="SO">SO (Suboficial)</option>
+                  <option value="2T">2T (Segundo Tenente)</option>
+                  <option value="1T">1T (Primeiro Tenente)</option>
+                  <option value="CAP">CAP (Capitão)</option>
+                  <option value="MAJ">MAJ (Major)</option>
+                  <option value="TC">TC (Tenente-Coronel)</option>
+                </select>
+              </div>
+
+             <div style={styles.inputGroupCol}>
+                <label style={styles.inputLabel}>SARAM (Login)</label>
+                <input 
+                  type="text" // Mudou de "number" para "text" para a máscara funcionar bem
+                  required 
+                  placeholder="Ex: 1234567" 
+                  value={formMilitar.saram} 
+                  onChange={e => setFormMilitar({...formMilitar, saram: aplicarMascaraSaram(e.target.value)})} 
+                  style={styles.input} 
+                />
+              </div>
+
+              <div style={styles.inputGroupCol}>
+                <label style={styles.inputLabel}>CPF</label>
+                <input 
+                  type="text" 
+                  required 
+                  placeholder="000.000.000-00" 
+                  value={formMilitar.cpf} 
+                  onChange={e => setFormMilitar({...formMilitar, cpf: aplicarMascaraCPF(e.target.value)})} 
+                  style={styles.input} 
+                />
+              </div>
+
+              <div style={styles.inputGroupCol}>
+                <label style={styles.inputLabel}>E-mail</label>
+                <input type="email" required placeholder="nome@unidade.mil" value={formMilitar.email} onChange={e => setFormMilitar({...formMilitar, email: e.target.value})} style={styles.input} />
+              </div>
+
+              <div style={styles.inputGroupCol}>
+                <label style={styles.inputLabel}>Telefone</label>
+                <input type="tel" required placeholder="(XX) 9XXXX-XXXX" value={formMilitar.telefone} onChange={e => setFormMilitar({...formMilitar, telefone: e.target.value})} style={styles.input} />
+              </div>
+
+              <div style={styles.inputGroupCol}>
+                <label style={styles.inputLabel}>Data de Nascimento</label>
+                <input type="date" required value={formMilitar.dataNascimento} onChange={e => setFormMilitar({...formMilitar, dataNascimento: e.target.value})} style={styles.input} />
+              </div>
+
+              <div style={styles.inputGroupCol}>
+                <label style={styles.inputLabel}>Senha de Acesso</label>
+                <input type="password" required value={formMilitar.senha} onChange={e => setFormMilitar({...formMilitar, senha: e.target.value})} style={styles.input} />
+              </div>
+
+              <div style={styles.inputGroupCol}>
+                <label style={styles.inputLabel}>Perfil de Acesso no SIGEM</label>
+                <select value={formMilitar.perfil} onChange={e => setFormMilitar({...formMilitar, perfil: e.target.value})} style={styles.input}>
+                  <option value="usuario">Visão da Tropa (Comum)</option>
+                  <option value="escalante">Escalante (Administrador)</option>
+                </select>
+              </div>
+            </div>
+            
+            <button type="submit" style={styles.btnAcao}>
+              <UserPlus size={18}/> Salvar Militar no Banco de Dados
+            </button>
+          </form>
         )}
         
         {subAba === 'criar-capa' && (
@@ -173,5 +346,12 @@ const styles = {
   tr: { borderBottom: '1px solid #f1f5f9' },
   td: { padding: '14px', color: '#334155', fontSize: '15px' },
   tdVazio: { textAlign: 'center', padding: '40px', color: '#94a3b8' },
-  btnFeriado: { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }
+  btnFeriado: { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' },
+  formGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' },
+  inputGroupCol: { display: 'flex', flexDirection: 'column', gap: '6px' },
+  inputLabel: { fontSize: '12px', fontWeight: 'bold', color: '#004d40', textTransform: 'uppercase' },
+  btnAcao: { display: 'flex', alignItems: 'center', gap: '8px', color: 'white', backgroundColor: '#004d40', border: 'none', padding: '12px 24px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', width: 'fit-content', marginTop: '15px' },
+  input: { padding: '12px', borderRadius: '6px', border: '1px solid #ccd0d5', fontSize: '15px', outline: 'none' },
+  msgErro: { display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#ffebee', color: '#c62828', padding: '15px', borderRadius: '6px', marginBottom: '20px', fontSize: '14px', fontWeight: '500', borderLeft: '5px solid #c62828', animation: 'fadeIn 0.3s ease' },
+  msgSucesso: { display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#e8f5e9', color: '#2e7d32', padding: '15px', borderRadius: '6px', marginBottom: '20px', fontSize: '14px', fontWeight: '500', borderLeft: '5px solid #2e7d32', animation: 'fadeIn 0.3s ease' },
 };

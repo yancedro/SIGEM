@@ -14,11 +14,20 @@ public class MilitarService {
     @Autowired
     private MilitarRepository repository;
 
+    // CADASTRAR MILITAR
     public Militar cadastrar(Militar militar) {
-        Optional<Militar> militarExistente = repository.findBySaram(militar.getSaram());
-        if (militarExistente.isPresent()) {
-            throw new RuntimeException("Erro: Já existe um militar cadastrado com o SARAM " + militar.getSaram());
+        // Validação de Duplicidade
+        if (repository.existsBySaram(militar.getSaram())) {
+            throw new IllegalArgumentException("Ação negada: Já existe um militar cadastrado com este SARAM.");
         }
+        if (repository.existsByCpf(militar.getCpf())) {
+            throw new IllegalArgumentException("Ação negada: Já existe um militar cadastrado com este CPF.");
+        }
+        //Preenche a data de apresentação automaticamente com a data de hoje
+        if (militar.getDataApresentacao() == null) {
+            militar.setDataApresentacao(java.time.LocalDate.now());
+        }
+        // Se passou pelas travas, salva no banco
         return repository.save(militar);
     }
 

@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "militar")
-@Data
+@Data // O Lombok já cria todos os Getters e Setters por nós!
 @NoArgsConstructor
 @AllArgsConstructor
 public class Militar {
@@ -16,14 +16,19 @@ public class Militar {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // --- CREDENCIAIS DE ACESSO ---
     @Column(nullable = false, unique = true, length = 10)
-    private String saram;
+    private String saram; // O SARAM será o Login
 
-    @Column(length = 30)
-    private String posto;
+    @Column(nullable = false)
+    private String senha;
 
-    @Column(length = 30)
-    private String graduacao;
+    @Column(nullable = false)
+    private String perfil = "usuario"; // "usuario" (Tropa) ou "escalante" (Admin)
+
+    // --- DADOS PESSOAIS ---
+    @Column(unique = false, length = 14) // Ex: 000.000.000-00
+    private String cpf;
 
     @Column(name = "nome_completo", nullable = false, length = 150)
     private String nomeCompleto;
@@ -31,11 +36,21 @@ public class Militar {
     @Column(name = "nome_guerra", length = 50)
     private String nomeGuerra;
 
+    @Column(name = "data_nascimento")
+    private LocalDate dataNascimento;
+
     @Column(length = 20)
     private String telefone;
 
     @Column(length = 100)
     private String email;
+
+    // --- DADOS MILITARES ---
+    @Column(length = 30)
+    private String posto;
+
+    @Column(length = 30)
+    private String graduacao;
 
     @Column(name = "data_apresentacao", nullable = false)
     private LocalDate dataApresentacao;
@@ -52,6 +67,7 @@ public class Militar {
     @Column(name = "restricao_medica", columnDefinition = "TEXT")
     private String restricaoMedica;
 
+    // --- AUDITORIA ---
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -63,123 +79,4 @@ public class Militar {
         updatedAt = LocalDateTime.now();
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getSaram() {
-        return saram;
-    }
-
-    public void setSaram(String saram) {
-        this.saram = saram;
-    }
-
-    public String getPosto() {
-        return posto;
-    }
-
-    public void setPosto(String posto) {
-        this.posto = posto;
-    }
-
-    public String getGraduacao() {
-        return graduacao;
-    }
-
-    public void setGraduacao(String graduacao) {
-        this.graduacao = graduacao;
-    }
-
-    public String getNomeCompleto() {
-        return nomeCompleto;
-    }
-
-    public void setNomeCompleto(String nomeCompleto) {
-        this.nomeCompleto = nomeCompleto;
-    }
-
-    public String getNomeGuerra() {
-        return nomeGuerra;
-    }
-
-    public void setNomeGuerra(String nomeGuerra) {
-        this.nomeGuerra = nomeGuerra;
-    }
-
-    public String getTelefone() {
-        return telefone;
-    }
-
-    public void setTelefone(String telefone) {
-        this.telefone = telefone;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public LocalDate getDataApresentacao() {
-        return dataApresentacao;
-    }
-
-    public void setDataApresentacao(LocalDate dataApresentacao) {
-        this.dataApresentacao = dataApresentacao;
-    }
-
-    public String getOmGrupo() {
-        return omGrupo;
-    }
-
-    public void setOmGrupo(String omGrupo) {
-        this.omGrupo = omGrupo;
-    }
-
-    public LocalDate getDataAntiguidade() {
-        return dataAntiguidade;
-    }
-
-    public void setDataAntiguidade(LocalDate dataAntiguidade) {
-        this.dataAntiguidade = dataAntiguidade;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public String getRestricaoMedica() {
-        return restricaoMedica;
-    }
-
-    public void setRestricaoMedica(String restricaoMedica) {
-        this.restricaoMedica = restricaoMedica;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
 }
