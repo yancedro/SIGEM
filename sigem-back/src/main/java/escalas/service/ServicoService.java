@@ -15,13 +15,19 @@ public class ServicoService {
     private ServicoRepository repository;
 
     public Servico cadastrar(Servico servico) {
-        // Regra de Negócio: Não pode ter dois serviços com o mesmo código
-        Optional<Servico> servicoExistente = repository.findByCodigo(servico.getCodigo());
-
-        if (servicoExistente.isPresent()) {
-            throw new RuntimeException("Erro: Já existe um serviço cadastrado com o código " + servico.getCodigo());
+        // Inteligência para gerar o código obrigatório automaticamente
+        String codigoGerado = servico.getNome().toUpperCase().replaceAll("\\s+", "_");
+        if (codigoGerado.length() > 20) {
+            codigoGerado = codigoGerado.substring(0, 20);
         }
 
+        // Verifica se a escala já existe
+        Optional<Servico> existente = repository.findByCodigo(codigoGerado);
+        if (existente.isPresent()) {
+            throw new IllegalArgumentException("Ação negada: Uma escala com este nome/código já existe.");
+        }
+
+        servico.setCodigo(codigoGerado);
         return repository.save(servico);
     }
 

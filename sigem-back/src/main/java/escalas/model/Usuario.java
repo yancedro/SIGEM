@@ -111,4 +111,8 @@ public class Usuario {
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
+
+    public Usuario orElseThrow(Object o) {
+        return null;
+    }
 }

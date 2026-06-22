@@ -7,6 +7,6 @@ import java.util.Optional;
 
 @Repository
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
-    // Criamos esse método personalizado para o sistema de Login que faremos depois
-    Optional<Usuario> findByUsername(String username);
+    // Método mágico do Spring para buscar a credencial na hora do login
+    Usuario findByUsername(String username);
 }

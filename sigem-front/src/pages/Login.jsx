@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ShieldCheck, User, Lock, AlertCircle } from 'lucide-react';
+import api from '../services/api';
 
 export default function Login() {
   const [tipoAcesso, setTipoAcesso] = useState('usuario'); 
@@ -7,24 +8,37 @@ export default function Login() {
   const [senha, setSenha] = useState('');
   const [erro, setErro] = useState('');
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setErro('');
-
-    // SIMULAÇÃO: No futuro o Java fará essa conferência
-    if (tipoAcesso === 'usuario' && saram === 'usuario' && senha === 'usuario') {
-      localStorage.setItem('sigem_perfil', 'usuario');
-      window.location.href = '/dashboard'; 
-    } 
-    else if (tipoAcesso === 'escalante' && saram === 'admin' && senha === 'admin') {
+    // --- 🔑 CHAVE MESTRA TEMPORÁRIA (BACKDOOR) ---
+    // (Vamos apagar isso assim que você cadastrar o primeiro usuário real)
+    if (saram === 'admin' && senha === 'admin') {
       localStorage.setItem('sigem_perfil', 'escalante');
       window.location.href = '/dashboard';
-    } 
-    else {
-      setErro('Acesso negado: SARAM/CPF ou senha incorretos para este perfil.');
+      return; // O return faz ele parar aqui e não ir perguntar pro Java
+    }
+    // ---------------------------------------------
+
+    try {
+      // O React chama a rota que acabamos de colocar no Controller
+      const resposta = await api.post('/militares/login', {
+        saram: saram,
+        senha: senha,
+        perfil: tipoAcesso // A aba que está selecionada (usuario ou escalante)
+      });
+
+      if (resposta.status === 200) {
+        localStorage.setItem('sigem_perfil', tipoAcesso);
+        window.location.href = '/dashboard'; 
+      }
+
+    } catch (err) {
+      // Se falhar, isso vai imprimir o motivo real no Console do navegador (F12)
+      console.error("ERRO DE LOGIN:", err); 
+      setErro('Acesso negado: SARAM, senha ou perfil incorretos.');
     }
   };
-
   return (
     <div style={styles.container}>
       <div style={styles.loginCard}>

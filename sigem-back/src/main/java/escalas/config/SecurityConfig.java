@@ -16,38 +16,39 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // 1. ATIVA O CORS COM AS CONFIGURAÇÕES QUE DEFINIREMOS ABAIXO
+                // 1. ATIVA O CORS COM AS CONFIGURAÇÕES
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // Mantive suas regras originais
-                        .requestMatchers(HttpMethod.GET, "/api/escalas/**").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/quadrinhos/**").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/indisponibilidades/**").authenticated()
 
-                        .requestMatchers(HttpMethod.POST, "/api/escalas/**").hasAuthority("ESCALANTE")
-                        .requestMatchers(HttpMethod.PUT, "/api/escalas/**").hasAuthority("ESCALANTE")
-                        .requestMatchers(HttpMethod.POST, "/api/quadrinhos/lastro").hasAuthority("ESCALANTE")
-                        .requestMatchers(HttpMethod.POST, "/api/usuarios").hasAuthority("ESCALANTE")
-                        .requestMatchers(HttpMethod.PUT, "/api/usuarios/*/promover").hasAuthority("ESCALANTE")
+                        // 🚨 FASE DE DESENVOLVIMENTO: LIBERANDO ROTAS CRÍTICAS 🚨
+                        // Declaramos as rotas COM e SEM "/**" para o Spring 6 não dar 403
+                        .requestMatchers("/api/militares", "/api/militares/**").permitAll()
 
-                        .requestMatchers(HttpMethod.PATCH, "/api/usuarios/*/alterar-senha").authenticated()
+                        .requestMatchers("/api/servicos", "/api/servicos/**").permitAll()
+                        .requestMatchers("/api/lastros", "/api/lastros/**").permitAll()
+                        .requestMatchers("/api/escalas", "/api/escalas/**").permitAll()
+                        .requestMatchers("/api/quadrinhos", "/api/quadrinhos/**").permitAll()
 
+                        // (Rotas futuras de permissão de Escalante comentadas por enquanto)
+                        // .requestMatchers(HttpMethod.POST, "/api/usuarios").hasAuthority("ESCALANTE")
+                        // .requestMatchers(HttpMethod.PUT, "/api/usuarios/*/promover").hasAuthority("ESCALANTE")
+
+                        // Qualquer outra rota não listada acima será bloqueada
                         .anyRequest().authenticated()
-                )
-                .httpBasic(org.springframework.security.config.Customizer.withDefaults());
+                );
 
         return http.build();
     }
 
-    // 2. DEFINE EXPLICITAMENTE AS REGRAS DE CORS DENTRO DA SEGURANÇA
+    // 2. EXPLICITA AS REGRAS DE CORS
     @Bean
     public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
         org.springframework.web.cors.CorsConfiguration configuration = new org.springframework.web.cors.CorsConfiguration();
         configuration.setAllowedOrigins(java.util.List.of("http://localhost:5173")); // Seu Front-end
         configuration.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(java.util.List.of("Authorization", "Content-Type", "X-Requested-With"));
-        configuration.setAllowCredentials(true); // Necessário para Basic Auth (Auth header)
+        configuration.setAllowCredentials(true);
 
         org.springframework.web.cors.UrlBasedCorsConfigurationSource source = new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
@@ -56,7 +57,6 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        // Define que usaremos BCrypt para criptografar as senhas no banco
         return new BCryptPasswordEncoder();
     }
 }

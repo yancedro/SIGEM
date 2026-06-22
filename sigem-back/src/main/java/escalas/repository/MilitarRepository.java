@@ -13,5 +13,7 @@ public interface MilitarRepository extends JpaRepository<Militar, Long> {
     // LINHA NOVA: O Spring vai criar um "SELECT * FROM militar WHERE saram = ?"
     boolean existsBySaram(String saram);
     boolean existsByCpf(String cpf);
-    Optional<Militar> findBySaram(String saram);
+    Optional<Militar> findBySaramAndSenhaAndPerfil(String saram, String senha, String perfil);
+
+    Militar findBySaram(String saram);
 }
